@@ -1,0 +1,45 @@
+user:
+  id: control-room-reviewer
+  email: operator@local
+  name: Control Room Reviewer
+items:
+  - app: overview
+    stars: 2
+    comment: >-
+      Everything is brightly colored even when normal. Make the background quiet grey and reserve saturated color for abnormal states and alarm priority.
+  - app: overview
+    stars: 2
+    comment: >-
+      The level display needs a setpoint marker and a shaded normal operating band, not just a cyan fill with a huge percent label.
+  - app: overview
+    stars: 2
+    comment: >-
+      The alarm list is unprioritized and mixes normal pump status with alarms. Separate equipment state from active alarms and sort the alarms by priority.
+  - app: overview
+    stars: 3
+    comment: >-
+      Add a one-hour sparkline next to level and outlet flow so I can see whether the tank is moving toward or away from the limit.
+  - app: overview
+    stars: 3
+    comment: >-
+      Pump status should read as a clear state indicator with text and stale-data handling, not as another colored alarm tile.
+  - app: overview
+    stars: 3
+    comment: >-
+      The mimic is too much like an engineering drawing. Simplify it into a Level-2 operating display: current state, trend, setpoint, and constraints.
+  - app: overview
+    stars: 4
+    comment: >-
+      Add alarm rationalization labels: high level should say operator consequence and first response, not just HI LEVEL.
+  - app: overview
+    stars: 4
+    comment: >-
+      Show data freshness from the historian and make it obvious if the sim has stopped writing samples.
+  - app: overview
+    stars: 4
+    comment: >-
+      The trend colors fight each other. Use one neutral palette with emphasis only on the selected PV and alarm thresholds.
+  - app: overview
+    stars: 4
+    comment: >-
+      Keep the before/after story visible in the git log: make each HMI cleanup a focused commit tied to this feedback item.

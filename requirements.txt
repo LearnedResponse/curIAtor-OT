@@ -1,0 +1,3 @@
+curiator>=0.1.0
+plotly>=5.18
+dash>=2.14
