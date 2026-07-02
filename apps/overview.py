@@ -130,8 +130,6 @@ def tank_figure(row: dict) -> go.Figure:
     fig.add_annotation(x=0.84, y=setpoint, text=f"SP {setpoint:.0f}%", showarrow=False, xanchor="left", font=dict(size=13, color="#1f2937"))
     fig.add_annotation(x=0.18, y=(normal_low + normal_high) / 2, text="normal", showarrow=False, xanchor="right", font=dict(size=12, color="#475569"))
     fig.add_annotation(x=0.5, y=min(level + 6, 96), text=f"{level:.1f}%", showarrow=False, font=dict(size=20, color=label_color))
-    fig.add_annotation(x=0.02, y=83, text="IN", showarrow=False, font=dict(color="#475569", size=16))
-    fig.add_annotation(x=0.98, y=18, text="OUT", showarrow=False, font=dict(color="#475569", size=16))
     fig.update_xaxes(visible=False, range=[0, 1])
     fig.update_yaxes(visible=False, range=[0, 100])
     fig.update_layout(height=330, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor="#f8fafc", plot_bgcolor="#f8fafc")
@@ -192,6 +190,44 @@ def alarm_items(row: dict) -> html.Div:
     ])
 
 
+def operating_state_panel(row: dict, rows: list[dict]) -> html.Div:
+    level = row["level"]
+    setpoint = row["setpoint"]
+    high_limit = setpoint + 13
+    low_limit = setpoint - 17
+    window = rows[-300:] if len(rows) >= 300 else rows
+    delta = level - window[0]["level"]
+    direction = "steady" if abs(delta) < 0.25 else ("rising" if delta > 0 else "falling")
+    if row["alarm_high"]:
+        state = "HIGH LEVEL ALARM"
+        severity = "high"
+        constraint = f"above {high_limit:.0f}% high constraint"
+    elif row["alarm_low"]:
+        state = "LOW LEVEL ALARM"
+        severity = "low"
+        constraint = f"below {low_limit:.0f}% low constraint"
+    elif low_limit <= level <= high_limit:
+        state = "NORMAL OPERATING RANGE"
+        severity = None
+        constraint = f"constraints {low_limit:.0f}% to {high_limit:.0f}%"
+    else:
+        state = "APPROACHING CONSTRAINT"
+        severity = "medium"
+        constraint = f"outside target band around {setpoint:.0f}% SP"
+    accent = ALARM_COLORS.get(severity, "#64748b")
+    return html.Div(
+        style={**PANEL, "background": "#ffffff", "borderLeft": f"8px solid {accent}", "marginBottom": "12px"},
+        children=[
+            html.Div("Operating state", style={"fontSize": "12px", "fontWeight": 700, "textTransform": "uppercase", "color": "#475569"}),
+            html.Div(state, style={"fontSize": "24px", "fontWeight": 800, "color": "#111827"}),
+            html.Div(
+                f"Level {level:.1f}% vs SP {setpoint:.0f}% | {direction} {abs(delta):.1f}% over five minutes | {constraint}",
+                style={"fontSize": "13px", "color": "#334155"},
+            ),
+        ],
+    )
+
+
 def level_severity(row: dict) -> str | None:
     if row["alarm_high"]:
         return "high"
@@ -213,9 +249,10 @@ def build_app() -> dash.Dash:
             id="sparklines",
             style={"display": "grid", "gridTemplateColumns": "repeat(2, minmax(220px, 1fr))", "gap": "10px", "marginBottom": "12px"},
         ),
+        html.Div(id="state-summary"),
         html.Div(style={"display": "grid", "gridTemplateColumns": "1.2fr 1fr 0.9fr", "gap": "12px"}, children=[
             html.Div(style=PANEL, children=[html.H3("Trend", style={"marginTop": 0}), dcc.Graph(id="trend", config={"displayModeBar": False})]),
-            html.Div(style=PANEL, children=[html.H3("Mimic", style={"marginTop": 0}), dcc.Graph(id="tank", config={"displayModeBar": False})]),
+            html.Div(style=PANEL, children=[html.H3("Level Constraints", style={"marginTop": 0}), dcc.Graph(id="tank", config={"displayModeBar": False})]),
             html.Div(style=PANEL, children=[html.H3("Alarms and Equipment", style={"marginTop": 0}), html.Div(id="alarms")]),
         ]),
         dcc.Interval(id="tick", interval=1000, n_intervals=0),
@@ -224,6 +261,7 @@ def build_app() -> dash.Dash:
     @app.callback(
         Output("metrics", "children"),
         Output("sparklines", "children"),
+        Output("state-summary", "children"),
         Output("trend", "figure"),
         Output("tank", "figure"),
         Output("alarms", "children"),
@@ -242,7 +280,7 @@ def build_app() -> dash.Dash:
             sparkline_card("level one-hour trend", rows, "level", "%", "#334155"),
             sparkline_card("outlet flow one-hour trend", rows, "flow_out", "", "#475569"),
         ]
-        return metrics, sparklines, trend_figure(rows), tank_figure(row), alarm_items(row)
+        return metrics, sparklines, operating_state_panel(row, rows), trend_figure(rows), tank_figure(row), alarm_items(row)
 
     return app
 
