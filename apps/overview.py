@@ -27,8 +27,8 @@ NORMAL_CARD = {**CARD, "background": "#ffffff", "minHeight": "88px"}
 ALARM_COLORS = {"high": "#b91c1c", "medium": "#c2410c", "low": "#b45309"}
 
 
-def read_rows(limit: int = 720, db: Path = DEFAULT_DB) -> list[dict]:
-    ensure_history(db)
+def read_rows(limit: int = 3600, db: Path = DEFAULT_DB) -> list[dict]:
+    ensure_history(db, min_rows=limit)
     con = sqlite3.connect(db)
     con.row_factory = sqlite3.Row
     try:
@@ -75,6 +75,43 @@ def trend_figure(rows: list[dict]) -> go.Figure:
     fig.update_xaxes(gridcolor="#e2e8f0", zerolinecolor="#cbd5e1")
     fig.update_yaxes(gridcolor="#e2e8f0", zerolinecolor="#cbd5e1")
     return fig
+
+
+def sparkline_figure(rows: list[dict], field: str, color: str = "#334155") -> go.Figure:
+    x = [r["t"] / 60 for r in rows]
+    y = [r[field] for r in rows]
+    fig = go.Figure(go.Scatter(x=x, y=y, mode="lines", line=dict(color=color, width=2), hoverinfo="skip"))
+    fig.update_layout(
+        height=92,
+        margin=dict(l=8, r=8, t=8, b=8),
+        paper_bgcolor="#ffffff",
+        plot_bgcolor="#ffffff",
+        showlegend=False,
+    )
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+    return fig
+
+
+def sparkline_card(label: str, rows: list[dict], field: str, unit: str, color: str = "#334155") -> html.Div:
+    start = rows[0][field]
+    end = rows[-1][field]
+    delta = end - start
+    if abs(delta) < 0.05:
+        direction = "steady"
+    else:
+        direction = "rising" if delta > 0 else "falling"
+    return html.Div(
+        style={**PANEL, "background": "#ffffff"},
+        children=[
+            html.Div(label, style={"fontSize": "12px", "fontWeight": 700, "textTransform": "uppercase", "color": "#475569"}),
+            html.Div(
+                f"{end:.1f}{unit} | {direction} {abs(delta):.1f}{unit} over last hour",
+                style={"fontSize": "13px", "color": "#334155", "marginBottom": "4px"},
+            ),
+            dcc.Graph(figure=sparkline_figure(rows, field, color), config={"displayModeBar": False}),
+        ],
+    )
 
 
 def tank_figure(row: dict) -> go.Figure:
@@ -164,6 +201,10 @@ def build_app() -> dash.Dash:
             id="metrics",
             style={"display": "grid", "gridTemplateColumns": "repeat(4, minmax(140px, 1fr))", "gap": "10px", "marginBottom": "12px"},
         ),
+        html.Div(
+            id="sparklines",
+            style={"display": "grid", "gridTemplateColumns": "repeat(2, minmax(220px, 1fr))", "gap": "10px", "marginBottom": "12px"},
+        ),
         html.Div(style={"display": "grid", "gridTemplateColumns": "1.2fr 1fr 0.9fr", "gap": "12px"}, children=[
             html.Div(style=PANEL, children=[html.H3("Trend", style={"marginTop": 0}), dcc.Graph(id="trend", config={"displayModeBar": False})]),
             html.Div(style=PANEL, children=[html.H3("Mimic", style={"marginTop": 0}), dcc.Graph(id="tank", config={"displayModeBar": False})]),
@@ -174,6 +215,7 @@ def build_app() -> dash.Dash:
 
     @app.callback(
         Output("metrics", "children"),
+        Output("sparklines", "children"),
         Output("trend", "figure"),
         Output("tank", "figure"),
         Output("alarms", "children"),
@@ -188,7 +230,11 @@ def build_app() -> dash.Dash:
             metric_card("valve", f"{row['valve_pct']:.0f}%", "inlet valve"),
             metric_card("temperature", f"{row['temp']:.1f} F", row["pump_status"], "medium" if row["alarm_temp_high"] else None),
         ]
-        return metrics, trend_figure(rows), tank_figure(row), alarm_items(row)
+        sparklines = [
+            sparkline_card("level one-hour trend", rows, "level", "%", "#334155"),
+            sparkline_card("outlet flow one-hour trend", rows, "flow_out", "", "#475569"),
+        ]
+        return metrics, sparklines, trend_figure(rows), tank_figure(row), alarm_items(row)
 
     return app
 
