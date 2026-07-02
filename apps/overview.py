@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+import time
 from pathlib import Path
 
 import dash
@@ -214,6 +215,26 @@ def alarm_items(row: dict) -> html.Div:
     ])
 
 
+def freshness_card(_row: dict, db: Path = DEFAULT_DB) -> html.Div:
+    try:
+        age_seconds = max(0, int(time.time() - db.stat().st_mtime))
+    except OSError:
+        age_seconds = 9999
+    if age_seconds <= 5:
+        state = "LIVE"
+        detail = f"historian file updated {age_seconds}s ago"
+        severity = None
+    elif age_seconds <= 30:
+        state = "STALE"
+        detail = f"historian file updated {age_seconds}s ago - check sim process"
+        severity = "medium"
+    else:
+        state = "HISTORIAN STALE"
+        detail = f"historian file updated {age_seconds}s ago - sim may have stopped"
+        severity = "high"
+    return metric_card("historian", state, detail, severity)
+
+
 def operating_state_panel(row: dict, rows: list[dict]) -> html.Div:
     level = row["level"]
     setpoint = row["setpoint"]
@@ -267,7 +288,7 @@ def build_app() -> dash.Dash:
         html.H2("Tank 42 Level Control - Baseline HMI", style={"margin": "0 0 10px", "color": "#1f2937"}),
         html.Div(
             id="metrics",
-            style={"display": "grid", "gridTemplateColumns": "repeat(4, minmax(140px, 1fr))", "gap": "10px", "marginBottom": "12px"},
+            style={"display": "grid", "gridTemplateColumns": "repeat(5, minmax(140px, 1fr))", "gap": "10px", "marginBottom": "12px"},
         ),
         html.Div(
             id="sparklines",
@@ -299,6 +320,7 @@ def build_app() -> dash.Dash:
             metric_card("setpoint", f"{row['setpoint']:.1f}%", "SP"),
             metric_card("valve", f"{row['valve_pct']:.0f}%", "inlet valve"),
             metric_card("temperature", f"{row['temp']:.1f} F", row["pump_status"], "medium" if row["alarm_temp_high"] else None),
+            freshness_card(row),
         ]
         sparklines = [
             sparkline_card("level one-hour trend", rows, "level", "%", "#334155"),
