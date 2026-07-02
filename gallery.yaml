@@ -19,8 +19,7 @@ agent:
   timeout: 900
 
 runner:
-  mode: checkout
-  path: ../curiator
+  mode: pinned
 
 git:
   commit: true
