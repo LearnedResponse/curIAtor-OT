@@ -138,25 +138,49 @@ def tank_figure(row: dict) -> go.Figure:
 
 def alarm_items(row: dict) -> html.Div:
     alarms = [
-        (1, "HI LEVEL", row["alarm_high"], "high"),
-        (2, "TEMP HIGH", row["alarm_temp_high"], "medium"),
-        (3, "LOW LEVEL SWITCH CHATTER", row["alarm_low"], "low"),
+        {
+            "priority": 1,
+            "name": "HI LEVEL",
+            "active": row["alarm_high"],
+            "severity": "high",
+            "consequence": "risk of tank overflow and downstream carryover",
+            "response": "reduce inlet valve, verify outlet pump running",
+        },
+        {
+            "priority": 2,
+            "name": "TEMP HIGH",
+            "active": row["alarm_temp_high"],
+            "severity": "medium",
+            "consequence": "thermal stress on product and equipment",
+            "response": "check cooling and reduce heat input",
+        },
+        {
+            "priority": 3,
+            "name": "LOW LEVEL SWITCH CHATTER",
+            "active": row["alarm_low"],
+            "severity": "low",
+            "consequence": "pump suction margin may be reduced",
+            "response": "confirm level trend before switching pump state",
+        },
     ]
-    active = sorted((alarm for alarm in alarms if alarm[2]), key=lambda alarm: alarm[0])
+    active = sorted((alarm for alarm in alarms if alarm["active"]), key=lambda alarm: alarm["priority"])
     if active:
         alarm_cards = [
             html.Div(
-                f"P{priority} - {name}",
+                [
+                    html.Div(f"P{alarm['priority']} - {alarm['name']}", style={"fontWeight": 800, "marginBottom": "4px"}),
+                    html.Div(f"Consequence: {alarm['consequence']}", style={"fontSize": "12px", "fontWeight": 600}),
+                    html.Div(f"First response: {alarm['response']}", style={"fontSize": "12px", "fontWeight": 600}),
+                ],
                 style={
                     **CARD,
-                    "background": ALARM_COLORS[severity],
+                    "background": ALARM_COLORS[alarm["severity"]],
                     "color": "#ffffff",
-                    "borderColor": ALARM_COLORS[severity],
+                    "borderColor": ALARM_COLORS[alarm["severity"]],
                     "marginBottom": "8px",
-                    "fontWeight": 800,
                 },
             )
-            for priority, name, _active, severity in active
+            for alarm in active
         ]
     else:
         alarm_cards = [
