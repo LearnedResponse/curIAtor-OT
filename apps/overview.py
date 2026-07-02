@@ -101,32 +101,50 @@ def tank_figure(row: dict) -> go.Figure:
     return fig
 
 
-def alarm_items(row: dict) -> list[html.Div]:
+def alarm_items(row: dict) -> html.Div:
     alarms = [
-        ("HI LEVEL", row["alarm_high"], "high"),
-        ("TEMP HIGH", row["alarm_temp_high"], "medium"),
-        ("LOW LEVEL SWITCH CHATTER", row["alarm_low"], "low"),
-        ("PUMP STATUS NORMAL", False, None),
+        (1, "HI LEVEL", row["alarm_high"], "high"),
+        (2, "TEMP HIGH", row["alarm_temp_high"], "medium"),
+        (3, "LOW LEVEL SWITCH CHATTER", row["alarm_low"], "low"),
     ]
-    out = []
-    for name, active, severity in alarms:
-        color = ALARM_COLORS.get(severity, "#64748b") if active else "#e2e8f0"
-        text = "#ffffff" if active else "#334155"
-        border = ALARM_COLORS.get(severity, "#94a3b8") if active else "#cbd5e1"
-        out.append(
+    active = sorted((alarm for alarm in alarms if alarm[2]), key=lambda alarm: alarm[0])
+    if active:
+        alarm_cards = [
             html.Div(
-                name,
+                f"P{priority} - {name}",
                 style={
                     **CARD,
-                    "background": color,
-                    "color": text,
-                    "borderColor": border,
+                    "background": ALARM_COLORS[severity],
+                    "color": "#ffffff",
+                    "borderColor": ALARM_COLORS[severity],
                     "marginBottom": "8px",
                     "fontWeight": 800,
                 },
             )
-        )
-    return out
+            for priority, name, _active, severity in active
+        ]
+    else:
+        alarm_cards = [
+            html.Div(
+                "No active alarms",
+                style={**CARD, "background": "#e2e8f0", "color": "#334155", "borderColor": "#cbd5e1", "marginBottom": "8px"},
+            )
+        ]
+    equipment = html.Div(
+        [
+            html.Div("Equipment state", style={"fontSize": "12px", "fontWeight": 700, "color": "#475569", "marginBottom": "6px"}),
+            html.Div(
+                f"Pump: {row['pump_status']}",
+                style={**CARD, "background": "#ffffff", "color": "#1f2937", "borderColor": "#cbd5e1"},
+            ),
+        ],
+        style={"marginTop": "14px"},
+    )
+    return html.Div([
+        html.Div("Active alarms", style={"fontSize": "12px", "fontWeight": 700, "color": "#475569", "marginBottom": "6px"}),
+        *alarm_cards,
+        equipment,
+    ])
 
 
 def level_severity(row: dict) -> str | None:
@@ -149,7 +167,7 @@ def build_app() -> dash.Dash:
         html.Div(style={"display": "grid", "gridTemplateColumns": "1.2fr 1fr 0.9fr", "gap": "12px"}, children=[
             html.Div(style=PANEL, children=[html.H3("Trend", style={"marginTop": 0}), dcc.Graph(id="trend", config={"displayModeBar": False})]),
             html.Div(style=PANEL, children=[html.H3("Mimic", style={"marginTop": 0}), dcc.Graph(id="tank", config={"displayModeBar": False})]),
-            html.Div(style=PANEL, children=[html.H3("Alarm List", style={"marginTop": 0}), html.Div(id="alarms")]),
+            html.Div(style=PANEL, children=[html.H3("Alarms and Equipment", style={"marginTop": 0}), html.Div(id="alarms")]),
         ]),
         dcc.Interval(id="tick", interval=1000, n_intervals=0),
     ])
