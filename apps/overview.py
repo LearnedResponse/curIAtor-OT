@@ -79,13 +79,20 @@ def trend_figure(rows: list[dict]) -> go.Figure:
 
 def tank_figure(row: dict) -> go.Figure:
     level = row["level"]
+    setpoint = row["setpoint"]
+    normal_low = max(0, setpoint - 8)
+    normal_high = min(100, setpoint + 8)
     alarm = row["alarm_high"] or row["alarm_low"]
     liquid = ALARM_COLORS["high"] if alarm else "#94a3b8"
     label_color = ALARM_COLORS["high"] if alarm else "#1f2937"
     fig = go.Figure()
     fig.add_shape(type="rect", x0=0.25, x1=0.75, y0=0, y1=100, line=dict(color="#334155", width=3), fillcolor="#f1f5f9")
+    fig.add_shape(type="rect", x0=0.25, x1=0.75, y0=normal_low, y1=normal_high, line=dict(width=0), fillcolor="#dbeafe")
     fig.add_shape(type="rect", x0=0.25, x1=0.75, y0=0, y1=level, line=dict(color=liquid, width=1), fillcolor=liquid)
-    fig.add_annotation(x=0.5, y=min(level + 6, 96), text=f"{level:.1f}%", showarrow=False, font=dict(size=22, color=label_color))
+    fig.add_shape(type="line", x0=0.20, x1=0.80, y0=setpoint, y1=setpoint, line=dict(color="#1f2937", width=3, dash="dash"))
+    fig.add_annotation(x=0.84, y=setpoint, text=f"SP {setpoint:.0f}%", showarrow=False, xanchor="left", font=dict(size=13, color="#1f2937"))
+    fig.add_annotation(x=0.18, y=(normal_low + normal_high) / 2, text="normal", showarrow=False, xanchor="right", font=dict(size=12, color="#475569"))
+    fig.add_annotation(x=0.5, y=min(level + 6, 96), text=f"{level:.1f}%", showarrow=False, font=dict(size=20, color=label_color))
     fig.add_annotation(x=0.02, y=83, text="IN", showarrow=False, font=dict(color="#475569", size=16))
     fig.add_annotation(x=0.98, y=18, text="OUT", showarrow=False, font=dict(color="#475569", size=16))
     fig.update_xaxes(visible=False, range=[0, 1])
