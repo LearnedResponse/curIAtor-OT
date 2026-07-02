@@ -56,13 +56,18 @@ def metric_card(label: str, value: str, detail: str = "", severity: str | None =
 
 def trend_figure(rows: list[dict]) -> go.Figure:
     x = [r["t"] / 60 for r in rows]
+    setpoint = rows[-1]["setpoint"]
+    high_limit = setpoint + 13
+    low_limit = setpoint - 17
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=[r["level"] for r in rows], name="level", line=dict(color="#334155", width=3)))
+    fig.add_trace(go.Scatter(x=x, y=[r["level"] for r in rows], name="selected PV: level", line=dict(color="#111827", width=4)))
     fig.add_trace(
         go.Scatter(x=x, y=[r["setpoint"] for r in rows], name="setpoint", line=dict(color="#64748b", dash="dash", width=2))
     )
-    fig.add_trace(go.Scatter(x=x, y=[r["flow_in"] for r in rows], name="flow in", line=dict(color="#64748b", width=2)))
-    fig.add_trace(go.Scatter(x=x, y=[r["flow_out"] for r in rows], name="flow out", line=dict(color="#94a3b8", width=2)))
+    fig.add_trace(go.Scatter(x=x, y=[r["flow_in"] for r in rows], name="context: flow in", line=dict(color="#cbd5e1", width=1)))
+    fig.add_trace(go.Scatter(x=x, y=[r["flow_out"] for r in rows], name="context: flow out", line=dict(color="#94a3b8", width=1)))
+    fig.add_hline(y=high_limit, line=dict(color=ALARM_COLORS["high"], width=2), annotation_text="high constraint", annotation_position="top left")
+    fig.add_hline(y=low_limit, line=dict(color=ALARM_COLORS["low"], width=2), annotation_text="low constraint", annotation_position="bottom left")
     fig.update_layout(
         height=330,
         margin=dict(l=40, r=20, t=28, b=34),
