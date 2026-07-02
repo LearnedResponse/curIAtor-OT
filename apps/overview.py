@@ -167,11 +167,19 @@ def alarm_items(row: dict) -> html.Div:
                 style={**CARD, "background": "#e2e8f0", "color": "#334155", "borderColor": "#cbd5e1", "marginBottom": "8px"},
             )
         ]
+    pump = str(row.get("pump_status") or "unknown").lower()
+    known = pump in {"running", "standby"}
+    pump_label = pump.upper() if known else "STALE / UNKNOWN"
+    pump_detail = "historian value present" if known else "no valid pump_status in latest historian row"
     equipment = html.Div(
         [
             html.Div("Equipment state", style={"fontSize": "12px", "fontWeight": 700, "color": "#475569", "marginBottom": "6px"}),
             html.Div(
-                f"Pump: {row['pump_status']}",
+                [
+                    html.Div("Pump", style={"fontSize": "12px", "fontWeight": 700, "color": "#475569", "textTransform": "uppercase"}),
+                    html.Div(pump_label, style={"fontSize": "24px", "fontWeight": 800, "color": "#111827"}),
+                    html.Div(pump_detail, style={"fontSize": "12px", "color": "#64748b"}),
+                ],
                 style={**CARD, "background": "#ffffff", "color": "#1f2937", "borderColor": "#cbd5e1"},
             ),
         ],
