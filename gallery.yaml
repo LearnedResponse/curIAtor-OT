@@ -2,14 +2,21 @@
 # v1 is sim -> local SQLite historian -> Dash HMI. The MING stack is v2.
 
 apps:
-  - name: overview
-    title: Tank 42 rainbow HMI baseline
-    mount: { kind: dash-inproc, module: overview }
-    source: apps/overview.py
-    smoke: python scripts/smoke.py
+  - name: dash_suite
+    title: Dash suite
+    root: apps/dash_suite
+    source: .
+    smoke: python ../../scripts/smoke.py
     smoke_timeout: 30
-    tags: [ot, hmi, rough]
+    tags: [dash, shared-root]
     color: "#b5532d"
+    mounts:
+      - name: overview
+        title: Tank 42 rainbow HMI baseline
+        source: overview.py
+        mount: { kind: dash-inproc, module: overview }
+        tags: [dash, ot, hmi, rough, shared-root]
+        color: "#b5532d"
 
 agent:
   adapter: codex
@@ -40,6 +47,8 @@ shell:
   title: "curIAtor OT"
 
 tags:
+  dash: "#1f6fc0"
+  shared-root: "#177755"
   ot: "#245f73"
   hmi: "#7a3e6d"
   rough: "#b5532d"
