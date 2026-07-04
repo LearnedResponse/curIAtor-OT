@@ -18,6 +18,23 @@ apps:
         tags: [dash, ot, hmi, rough, shared-root]
         color: "#b5532d"
 
+  - name: twin_diagnostics
+    title: Tank 42 twin diagnostics
+    root: apps/twin_diagnostics
+    source: .
+    smoke: python smoke.py
+    smoke_timeout: 20
+    smoke_http: /api/snapshot
+    mount:
+      kind: engine-backed
+      cmd: "python server.py --port {port} --engine-url {engine_url}"
+      port: 8742
+      engine: "python engine.py --port {engine_port}"
+      engine_port: 8842
+      engine_health: /health
+    tags: [ot, hmi, twin, engine-backed]
+    color: "#245f73"
+
 agent:
   adapter: codex
   model: null
@@ -52,3 +69,5 @@ tags:
   ot: "#245f73"
   hmi: "#7a3e6d"
   rough: "#b5532d"
+  twin: "#245f73"
+  engine-backed: "#555"
