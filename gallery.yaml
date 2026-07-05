@@ -47,7 +47,7 @@ runner:
 
 git:
   commit: true
-  branch: curiator/auto
+  branch: null   # commit to the current HEAD (main); no separate curator branch
   signoff: true
   include_ledger: true
 
