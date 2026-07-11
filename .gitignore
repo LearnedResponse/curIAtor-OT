@@ -1,9 +1,12 @@
 feedback/shots/
 feedback/tasks/
 feedback/replies/
+feedback/runs/
+feedback/replays/
 feedback/app_feedback.sqlite*
 feedback/app_feedback.json
 .curiator-users.json
+.curiator/cache/
 __pycache__/
 *.pyc
 apps/__pycache__/
