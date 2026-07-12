@@ -41,6 +41,13 @@ agent:
   autonomy: auto-small
   sandbox: workspace-write
   timeout: 900
+  dispatch:
+    anonymous: hold
+    user: auto
+    trusted_groups: [trusted]
+  quotas:
+    per_user_daily: 3
+    global_daily: 25
 
 runner:
   mode: pinned
@@ -52,8 +59,11 @@ git:
   include_ledger: true
 
 auth:
-  mode: none
-  default_user: operator@local
+  mode: local
+  allow_anonymous: true
+  admin_groups: [admin]
+  anonymous_feedback_max: 20
+  anonymous_feedback_window_seconds: 86400
 
 feedback:
   dir: feedback
@@ -62,6 +72,9 @@ feedback:
 shell:
   port: 8430
   title: "curIAtor OT"
+  base_path: /gallery/ot
+  secure_cookies: true
+  proxy_hops: 1
 
 tags:
   dash: "#1f6fc0"
