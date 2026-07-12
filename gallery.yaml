@@ -1,6 +1,12 @@
 # curIAtor OT - public v1 HMI-maintenance example collection.
 # v1 is sim -> local SQLite historian -> Dash HMI. The MING stack is v2.
 
+home:
+  kicker: Industrial operations collection
+  description: "Two views of the same simulated Tank 42 process: a deliberately rough rainbow baseline and an engine-backed diagnostic interface."
+  featured: [overview, twin_diagnostics]
+  activity_limit: 8
+
 apps:
   - name: dash_suite
     title: Dash suite
@@ -13,6 +19,8 @@ apps:
     mounts:
       - name: overview
         title: Tank 42 rainbow HMI baseline
+        summary: Inspect a deliberately rough baseline HMI, historian state, alarms, constraints, and equipment status.
+        preview: assets/previews/overview.png
         source: overview.py
         mount: { kind: dash-inproc, module: overview }
         tags: [dash, ot, hmi, rough, shared-root]
@@ -20,6 +28,8 @@ apps:
 
   - name: twin_diagnostics
     title: Tank 42 twin diagnostics
+    summary: Compare live process values with an engine-backed digital twin and surface control or cavitation margins.
+    preview: assets/previews/twin_diagnostics.png
     root: apps/twin_diagnostics
     source: .
     smoke: python smoke.py
